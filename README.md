@@ -47,5 +47,4 @@ TFI-Metodologia-de-Sistemas-2/
 │
 ├── src/                      # Código fuente en Java
 │   └── MainSistemaAcademico.java  # Sistema base / versiones refactorizadas
-├── docs/                     # Documentación, evidencias y checklist de Code Review
 └── README.md                 # Documentación principal del proyecto
