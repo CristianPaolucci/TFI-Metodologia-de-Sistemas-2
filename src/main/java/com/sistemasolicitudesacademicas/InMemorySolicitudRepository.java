@@ -50,7 +50,7 @@ public class InMemorySolicitudRepository implements SolicitudRepository {
                 return;
             }
         }
-        throw new SolicitudNoEncontradaException("No existe la solicitud con ID: " + solicitud.getId());
+        throw new SolicitudNoEncontradaException(solicitud.getId());
     }
 
     @Override
