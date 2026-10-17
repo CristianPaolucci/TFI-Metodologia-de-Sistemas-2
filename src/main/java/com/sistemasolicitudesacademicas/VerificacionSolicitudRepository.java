@@ -31,8 +31,8 @@ public class VerificacionSolicitudRepository {
 
         // 3. Verificación de Actualización Explícita
         SolicitudAcademica aModificar = encontrada.get();
-        aModificar.setEstado(EstadoSolicitud.EN_PROCESO);
-        aModificar.setResponsable("Atención Alumnos");
+        aModificar.cambiarEstado(EstadoSolicitud.EN_PROCESO);
+        aModificar.asignarResponsable("Atención Alumnos");
         repo.actualizar(aModificar);
 
         Optional<SolicitudAcademica> actualizada = repo.buscarPorId("1");
@@ -42,7 +42,7 @@ public class VerificacionSolicitudRepository {
 
         // 4. Verificación de Protección del Estado Interno (Copias Defensivas)
         SolicitudAcademica obtenida = repo.buscarPorId("1").get();
-        obtenida.setResponsable("Hack Externe"); // Intento de modificación externa directa
+        obtenida.asignarResponsable("Hack Externe"); // Intento de modificación externa directa
         
         Optional<SolicitudAcademica> sinModificar = repo.buscarPorId("1");
         assert sinModificar.get().getResponsable().equals("Atención Alumnos") : "Error: El repositorio permitió la mutación directa del objeto almacenado";
@@ -50,7 +50,7 @@ public class VerificacionSolicitudRepository {
         List<SolicitudAcademica> listaTodas = repo.buscarTodas();
         try {
             listaTodas.clear(); // Intento de vaciar la lista interna
-            System.err.println("Error: La lista devuelta debió ser inmodificable.");
+            throw new AssertionError("La lista devuelta debió ser inmodificable.");
         } catch (UnsupportedOperationException e) {
             System.out.println("[OK] La lista interna está protegida frente a modificaciones externas.");
         }
