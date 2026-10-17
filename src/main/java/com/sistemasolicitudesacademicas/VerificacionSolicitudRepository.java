@@ -55,6 +55,67 @@ public class VerificacionSolicitudRepository {
             System.out.println("[OK] La lista interna está protegida frente a modificaciones externas.");
         }
 
+                // 5. Modificar el original después de guardar no cambia lo almacenado
+        solicitud1.asignarResponsable("Cambio sobre el original");
+        solicitud1.cambiarEstado(EstadoSolicitud.FINALIZADO);
+
+        SolicitudAcademica despuesDeGuardar = repo.buscarPorId(id1).get();
+        assert despuesDeGuardar.getResponsable().equals("Atención Alumnos")
+                : "Guardar no protegió el responsable mediante una copia";
+        assert despuesDeGuardar.getEstado() == EstadoSolicitud.EN_PROCESO
+                : "Guardar no protegió el estado mediante una copia";
+        System.out.println("[OK] Modificar el original no altera lo guardado.");
+
+        // 6. Los objetos de buscarTodas también son copias
+        SolicitudAcademica elementoDeLista = repo.buscarTodas().get(0);
+        elementoDeLista.asignarResponsable("Cambio desde la lista");
+        elementoDeLista.cambiarEstado(EstadoSolicitud.FINALIZADO);
+
+        SolicitudAcademica despuesDeLista = repo.buscarPorId(id1).get();
+        assert despuesDeLista.getResponsable().equals("Atención Alumnos")
+                : "buscarTodas expuso el responsable del objeto interno";
+        assert despuesDeLista.getEstado() == EstadoSolicitud.EN_PROCESO
+                : "buscarTodas expuso el estado del objeto interno";
+        System.out.println("[OK] Modificar elementos de la lista no altera el repositorio.");
+
+        // 7. Actualizar también almacena una copia independiente
+        SolicitudAcademica paraActualizar = repo.buscarPorId(id1).get();
+        paraActualizar.asignarResponsable("Secretaría Académica");
+        paraActualizar.cambiarEstado(EstadoSolicitud.FINALIZADO);
+        repo.actualizar(paraActualizar);
+
+        paraActualizar.asignarResponsable("Cambio después de actualizar");
+        paraActualizar.cambiarEstado(EstadoSolicitud.PENDIENTE);
+
+        SolicitudAcademica despuesDeActualizar = repo.buscarPorId(id1).get();
+        assert despuesDeActualizar.getResponsable().equals("Secretaría Académica")
+                : "Actualizar no guardó una copia independiente del responsable";
+        assert despuesDeActualizar.getEstado() == EstadoSolicitud.FINALIZADO
+                : "Actualizar no guardó una copia independiente del estado";
+        System.out.println("[OK] Modificar el objeto actualizado no altera lo almacenado.");
+
+        // 8. Actualizar una solicitud inexistente debe lanzar la excepción
+        SolicitudAcademica inexistente = new SolicitudAcademica(
+                "99", TipoSolicitud.CERTIFICADO,
+                "Juan Perez", 1, "Constancia de alumno regular");
+
+        int cantidadAntes = repo.buscarTodas().size();
+
+        try {
+            repo.actualizar(inexistente);
+            throw new AssertionError(
+                    "Actualizar una solicitud inexistente debió lanzar una excepción");
+        } catch (SolicitudNoEncontradaException e) {
+            assert e.getMessage().equals(
+                    "Error: No se encontró la solicitud con ID: 99")
+                    : "El mensaje de la excepción no contiene el ID esperado";
+        }
+
+        assert repo.buscarPorId("99").isEmpty()
+                : "La actualización incorporó una solicitud inexistente";
+        assert repo.buscarTodas().size() == cantidadAntes
+                : "La actualización fallida cambió la cantidad de solicitudes";
+        System.out.println("[OK] Actualizar una solicitud inexistente informa el error sin agregarla.");
         System.out.println("=== TODAS LAS VERIFICACIONES DEL REPOSITORIO PASARON CORRECTAMENTE ===");
     }
 }
