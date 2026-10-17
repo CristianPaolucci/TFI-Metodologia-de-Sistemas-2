@@ -55,15 +55,27 @@ public class VerificacionSolicitudRepository {
             System.out.println("[OK] La lista interna está protegida frente a modificaciones externas.");
         }
 
-                // 5. Modificar el original después de guardar no cambia lo almacenado
-        solicitud1.asignarResponsable("Cambio sobre el original");
-        solicitud1.cambiarEstado(EstadoSolicitud.FINALIZADO);
+        // 5. Modificar el original después de guardar no cambia lo almacenado
+        SolicitudRepository repoGuardado = new InMemorySolicitudRepository();
+        String idGuardado = repoGuardado.generarSiguienteId();
 
-        SolicitudAcademica despuesDeGuardar = repo.buscarPorId(id1).get();
-        assert despuesDeGuardar.getResponsable().equals("Atención Alumnos")
+        SolicitudAcademica original = new SolicitudAcademica(
+                idGuardado, TipoSolicitud.CERTIFICADO,
+                "Ana Lopez", 1, "Constancia de alumno regular");
+
+        repoGuardado.guardar(original);
+
+        original.asignarResponsable("Cambio sobre el original");
+        original.cambiarEstado(EstadoSolicitud.FINALIZADO);
+
+        SolicitudAcademica despuesDeGuardar =
+                repoGuardado.buscarPorId(idGuardado).get();
+
+        assert despuesDeGuardar.getResponsable().equals("Sin asignar")
                 : "Guardar no protegió el responsable mediante una copia";
-        assert despuesDeGuardar.getEstado() == EstadoSolicitud.EN_PROCESO
+        assert despuesDeGuardar.getEstado() == EstadoSolicitud.PENDIENTE
                 : "Guardar no protegió el estado mediante una copia";
+
         System.out.println("[OK] Modificar el original no altera lo guardado.");
 
         // 6. Los objetos de buscarTodas también son copias
