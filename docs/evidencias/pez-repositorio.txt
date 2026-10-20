@@ -1,0 +1,53 @@
+EVIDENCIA DE VERIFICACION DEL REPOSITORIO
+
+Implementación: Lautaro Pez.
+Revisión y correcciones: Facundo Milano, con asistencia de IA.
+Fecha: 17/10/2026.
+Rama: repositorio-solicitudes.
+Commit verificado: 7af1d2b95b48f7979ee1bb08c5917d62d02089b2.
+
+ENTORNO Y ALCANCE
+
+Compilación y ejecución realizadas con JDK 21 en el entorno
+de trabajo del asistente.
+
+Se compilaron el modelo, el repositorio, las excepciones,
+DatosSolicitud y las clases de verificación disponibles.
+Se excluyeron Main y SolicitudService de esta compilación parcial.
+
+Las verificaciones se ejecutaron con -ea para activar los assert.
+No se ejecutó Maven.
+
+RESULTADO DEL MODELO
+
+VerificacionSolicitudAcademica:
+Resultado: 40 correctas, 0 fallidas.
+
+SALIDA DEL REPOSITORIO
+
+=== INICIO DE VERIFICACIONES DEL REPOSITORIO ===
+[OK] Generación de identificadores secuenciales correcta.
+[OK] Búsqueda por ID existente e inexistente verificada.
+[OK] Actualización explícita de solicitud verificada.
+[OK] La lista interna está protegida frente a modificaciones externas.
+[OK] Modificar el original no altera lo guardado.
+[OK] Modificar elementos de la lista no altera el repositorio.
+[OK] Modificar el objeto actualizado no altera lo almacenado.
+[OK] Actualizar una solicitud inexistente informa el error sin agregarla.
+=== TODAS LAS VERIFICACIONES DEL REPOSITORIO PASARON CORRECTAMENTE ===
+
+Ambas clases de verificación finalizaron con código de salida 0.
+
+INTEGRACION PENDIENTE
+
+La compilación del proyecto completo todavía falla porque
+SolicitudService utiliza obtenerTodas(), método que ya no está
+en SolicitudRepository.
+
+La adaptación del servicio corresponde a Cristian Paolucci:
+utilizar generarSiguienteId() para obtener identificadores y
+actualizar(...) para guardar los cambios sobre las copias.
+
+El equipo acepta este estado intermedio durante la refactorización.
+Esta evidencia acredita las comprobaciones del modelo y del
+repositorio; no acredita todavía la integración del sistema completo.
