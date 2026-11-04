@@ -1,5 +1,7 @@
 package com.sistemasolicitudesacademicas;
 
+import java.util.List;
+
 public class SolicitudService {
     private final SolicitudRepository repository;
 
@@ -8,12 +10,14 @@ public class SolicitudService {
     }
 
     public SolicitudAcademica registrarSolicitud(DatosSolicitud datos) {
-        if (datos.getPrioridad() < 1 || datos.getPrioridad() > 3) {
-            throw new ValidacionSolicitudException("La prioridad no es válida. Debe estar entre 1 y 3.");
+        if (datos == null) {
+            throw new ValidacionSolicitudException(
+                    "Los datos de la solicitud no pueden ser nulos.");
         }
 
-        String id = String.valueOf(repository.obtenerTodas().size() + 1);
+        String id = repository.generarSiguienteId();
 
+        // El modelo valida los datos de la solicitud.
         SolicitudAcademica nuevaSolicitud = new SolicitudAcademica(
                 id,
                 datos.getTipo(),
@@ -26,25 +30,28 @@ public class SolicitudService {
         return nuevaSolicitud;
     }
 
-    public void cambiarEstado(String id, EstadoSolicitud nuevoEstado) {
-        SolicitudAcademica solicitud = repository.buscarPorId(id)
+    public SolicitudAcademica obtenerPorId(String id) {
+        return repository.buscarPorId(id)
                 .orElseThrow(() -> new SolicitudNoEncontradaException(id));
+    }
 
-        if (nuevoEstado == null) {
-            throw new ValidacionSolicitudException("El nuevo estado no puede ser nulo.");
-        }
+    public List<SolicitudAcademica> obtenerTodas() {
+        return repository.buscarTodas();
+    }
 
+    public void cambiarEstado(String id, EstadoSolicitud nuevoEstado) {
+        SolicitudAcademica solicitud = obtenerPorId(id);
         solicitud.cambiarEstado(nuevoEstado);
+
+        // La búsqueda devuelve una copia: hay que guardar el cambio.
+        repository.actualizar(solicitud);
     }
 
     public void asignarResponsable(String id, String responsable) {
-        if (responsable == null || responsable.trim().isEmpty()) {
-            throw new ValidacionSolicitudException("El responsable asignado no es válido.");
-        }
-
-        SolicitudAcademica solicitud = repository.buscarPorId(id)
-                .orElseThrow(() -> new SolicitudNoEncontradaException(id));
-
+        SolicitudAcademica solicitud = obtenerPorId(id);
         solicitud.asignarResponsable(responsable);
+
+        // La búsqueda devuelve una copia: hay que guardar el cambio.
+        repository.actualizar(solicitud);
     }
 }
