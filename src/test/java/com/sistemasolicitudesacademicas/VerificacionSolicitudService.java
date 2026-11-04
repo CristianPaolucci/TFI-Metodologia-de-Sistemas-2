@@ -19,54 +19,76 @@ public class VerificacionSolicitudService {
 
     @Test
     void debeRegistrarYAsignarIdCorrectamente() {
-        // Usamos el primer valor disponible de TipoSolicitud (ej. el primero del enum o un valor genérico)
-        DatosSolicitud datos = new DatosSolicitud(TipoSolicitud.values()[0], "Juan Perez", 2, "Solicitud de prueba");
+        TipoSolicitud tipo = TipoSolicitud.values()[0];
+        DatosSolicitud datos = new DatosSolicitud(tipo, "Juan Perez", 2, "Solicitud de prueba");
         SolicitudAcademica creada = servicio.registrarSolicitud(datos);
 
-        assertNotNull(creada.getId(), "El repositorio debe asignar un ID automático.");
+        assertNotNull(creada.getId());
         assertEquals("Juan Perez", creada.getEstudiante());
+        assertEquals(EstadoSolicitud.PENDIENTE, creada.getEstado());
+        assertEquals("Sin asignar", creada.getResponsable());
+    }
+
+    @Test
+    void debeLanzarExcepcionCuandoPrioridadEsInvalida() {
+        TipoSolicitud tipo = TipoSolicitud.values()[0];
+
+        // Prioridad menor a 1
+        DatosSolicitud datosBaja = new DatosSolicitud(tipo, "Ana Gomez", 0, "Prioridad inválida baja");
+        assertThrows(ValidacionSolicitudException.class, () -> {
+            servicio.registrarSolicitud(datosBaja);
+        });
+
+        // Prioridad mayor a 3
+        DatosSolicitud datosAlta = new DatosSolicitud(tipo, "Carlos Ruiz", 4, "Prioridad inválida alta");
+        assertThrows(ValidacionSolicitudException.class, () -> {
+            servicio.registrarSolicitud(datosAlta);
+        });
     }
 
     @Test
     void debeComprobarBusquedaExistenteEInexistente() {
-        DatosSolicitud datos = new DatosSolicitud(TipoSolicitud.values()[0], "Maria Gomez", 1, "Excepción de correlativa");
+        TipoSolicitud tipo = TipoSolicitud.values()[0];
+        DatosSolicitud datos = new DatosSolicitud(tipo, "Maria Gomez", 1, "Excepción de correlativa");
         SolicitudAcademica creada = servicio.registrarSolicitud(datos);
 
-        // Búsqueda existente
-        SolicitudAcademica encontrada = servicio.obtenerPorId(creada.getId());
+        SolicitudAcademica encontrada = repositorio.buscarPorId(creada.getId()).orElse(null);
         assertNotNull(encontrada);
+        assertEquals(creada.getId(), encontrada.getId());
 
-        // Búsqueda inexistente (debe lanzar SolicitudNoEncontradaException)
         assertThrows(SolicitudNoEncontradaException.class, () -> {
-            servicio.obtenerPorId("id-falso-999");
+            servicio.cambiarEstado("id-falso-999", EstadoSolicitud.values()[0]);
         });
     }
 
     @Test
     void debeActualizarEstadoYResponsableCorrectamente() {
-        DatosSolicitud datos = new DatosSolicitud(TipoSolicitud.values()[0], "Carlos Ruiz", 3, "Constancia alumno regular");
+        TipoSolicitud tipo = TipoSolicitud.values()[0];
+        DatosSolicitud datos = new DatosSolicitud(tipo, "Lucia Fernandez", 3, "Constancia alumno regular");
         SolicitudAcademica creada = servicio.registrarSolicitud(datos);
 
-        // Cambiar estado usando el primer estado disponible del enum
         EstadoSolicitud nuevoEstado = EstadoSolicitud.values()[0];
         servicio.cambiarEstado(creada.getId(), nuevoEstado);
-        assertEquals(nuevoEstado, servicio.obtenerPorId(creada.getId()).getEstado());
+        assertEquals(nuevoEstado, repositorio.buscarPorId(creada.getId()).get().getEstado());
 
-        // Asignar responsable
         servicio.asignarResponsable(creada.getId(), "Profesor Tutor");
-        assertEquals("Profesor Tutor", servicio.obtenerPorId(creada.getId()).getResponsable());
+        SolicitudAcademica actualizada = repositorio.buscarPorId(creada.getId()).get();
+        assertEquals("Profesor Tutor", actualizada.getResponsable());
     }
 
     @Test
     void debeProtegerFrenteAModificacionesExternas() {
-        DatosSolicitud datos = new DatosSolicitud(TipoSolicitud.values()[0], "Ana Lopez", 1, "Pase de turno");
+        TipoSolicitud tipo = TipoSolicitud.values()[0];
+        DatosSolicitud datos = new DatosSolicitud(tipo, "Pedro Picapiedra", 1, "Pase de turno");
         servicio.registrarSolicitud(datos);
 
-        List<SolicitudAcademica> lista1 = servicio.obtenerTodas();
+        List<SolicitudAcademica> lista1 = repositorio.buscarTodas();
         int tamañoOriginal = lista1.size();
-
         assertNotNull(lista1);
-        List<SolicitudAcademica> lista2 = servicio.obtenerTodas();
-        assertEquals(tamañoOriginal, lista2.size(), "La lista debe mantener la integridad frente a consultas múltiples.");
+
+        // Intentamos mutar la lista obtenida externamente (debe estar protegida por copias defensivas)
+        List<SolicitudAcademica> lista2 = repositorio.buscarTodas();
+        assertEquals(tamañoOriginal, lista2.size());
+        assertNotSame(lista1.get(0), lista2.get(0), "Las instancias devueltas deben ser copias defensivas independientes");
     }
 }

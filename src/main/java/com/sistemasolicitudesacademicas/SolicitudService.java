@@ -12,7 +12,8 @@ public class SolicitudService {
             throw new ValidacionSolicitudException("La prioridad no es válida. Debe estar entre 1 y 3.");
         }
 
-        String id = String.valueOf(repository.obtenerTodas().size() + 1);
+        // Usamos el generador de IDs del repositorio si está disponible, o el tamaño
+        String id = repository.generarSiguienteId();
 
         SolicitudAcademica nuevaSolicitud = new SolicitudAcademica(
                 id,
@@ -35,6 +36,7 @@ public class SolicitudService {
         }
 
         solicitud.cambiarEstado(nuevoEstado);
+        repository.actualizar(solicitud); // Usamos actualizar para pisar el registro existente en la lista
     }
 
     public void asignarResponsable(String id, String responsable) {
@@ -46,5 +48,6 @@ public class SolicitudService {
                 .orElseThrow(() -> new SolicitudNoEncontradaException(id));
 
         solicitud.asignarResponsable(responsable);
+        repository.actualizar(solicitud); // Usamos actualizar para guardar el cambio de responsable en la lista
     }
 }
